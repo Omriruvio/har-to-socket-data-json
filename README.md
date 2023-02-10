@@ -32,9 +32,9 @@ Input the path to your HAR file to the console
 
 Two files will be created:
 
-<original-har-filename>.json
+``out/<original-har-filename>.json``
 
-<original-har-filename-metadata>.json
+``out/<original-har-filename-metadata>.json``
 
 ## Contributing
 
