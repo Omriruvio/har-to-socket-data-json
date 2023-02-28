@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { Har } from 'har-format';
 import * as path from 'path';
 import * as util from 'util';
 
@@ -56,12 +57,12 @@ const parseMessage = (inputMessage: any): MessageOutput => {
 
 export const harToSocketDataJson = async (harFilePath: string, outputPath?: string) => {
   const file = readFile(harFilePath, 'utf8');
-  const parsedFile = JSON.parse(await file);
+  const parsedFile = JSON.parse(await file as string) as Har;
   const entries = parsedFile.log.entries;
-  const filteredEntries = entries.filter((entry: any) => entry._webSocketMessages);
+  const filteredEntries = entries.filter((entry) => entry._webSocketMessages);
   let timeFromSessionStart = 0;
 
-  const webSocketMessages = filteredEntries.map((entry: any) => entry._webSocketMessages);
+  const webSocketMessages = filteredEntries.map((entry) => entry._webSocketMessages);
   const flattenedWebSocketMessages = webSocketMessages.flat();
   const filteredWebSocketMessages = flattenedWebSocketMessages.filter((message: any) => message.type === 'receive');
   const mappedWebSocketMessages = filteredWebSocketMessages.map((message: any, i: number, arr: any[]) => {
@@ -105,5 +106,9 @@ export const harToSocketDataJson = async (harFilePath: string, outputPath?: stri
   const sessionMetadataFile = await writeFile(sessionMetadataFilePath, JSON.stringify(sessionMetadata, null, 2));
   console.log(`File created: ${sessionMetadataFilePath}`);
 
-  return { jsonFile, sessionMetadataFile };
+  return {
+    messages: mappedWebSocketMessages,
+    sessionMetadata,
+  }
+
 };
