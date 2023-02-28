@@ -14,3 +14,5 @@ const { harFilePath, outputFilePath } = getArgs();
     process.exit(1);
   }
 })();
+
+export { harToSocketDataJson } from './harToSocketDataJson';
