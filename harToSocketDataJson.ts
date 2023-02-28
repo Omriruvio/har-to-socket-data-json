@@ -73,17 +73,17 @@ export const harToSocketDataJson = async (harFilePath: string) => {
     return parseMessage(message);
   });
 
-  // if no /out directory exists, create it
-  const outDir = path.join(path.dirname(harFilePath), '/out');
+  // out dir should be created in the execution path
+  const outDir = path.join(process.cwd(), '/out');
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir);
 
-  // generate a json file with the same name as the input file
+  // generate a json file with the same name as the input file in the out dir
   const fileName = path.basename(harFilePath, '.har');
-  const jsonFilePath = path.join(path.dirname(harFilePath), `/out/${fileName}.json`);
+  const jsonFilePath = path.join(outDir, `${fileName}.json`);
   const jsonFile = await writeFile(jsonFilePath, JSON.stringify(mappedWebSocketMessages, null, 2));
   console.log('json file created');
 
-  // generate a json file with the session metadata
+  // generate a json file with the session metadata in the out dir
   const sessionMetadata: SessionMetadata = {
     startTime: mappedWebSocketMessages[0].timestamp.getTime(),
     endTime: mappedWebSocketMessages[mappedWebSocketMessages.length - 1].timestamp.getTime(),
@@ -91,7 +91,7 @@ export const harToSocketDataJson = async (harFilePath: string) => {
     totalMessages: mappedWebSocketMessages.length,
   };
 
-  const sessionMetadataFilePath = path.join(path.dirname(harFilePath), `/out/${fileName}-metadata.json`);
+  const sessionMetadataFilePath = path.join(outDir, `${fileName}-metadata.json`);
   const sessionMetadataFile = await writeFile(sessionMetadataFilePath, JSON.stringify(sessionMetadata, null, 2));
   console.log('session metadata file created');
 
