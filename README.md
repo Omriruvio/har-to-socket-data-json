@@ -27,7 +27,7 @@ npm i
 
 ```bash
 npx ts-node index.ts
-npx ts-node index.ts --harFilePath=<path>
+npx ts-node index.ts -f=<path to har file> -o=<output directory full path>
 ```
 Input the path to your HAR file to the console
 
