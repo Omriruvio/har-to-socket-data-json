@@ -23,6 +23,15 @@ type SessionMetadata = {
 };
 
 const convertCamelCaseToUnderscore = (str: string) => str.replace(/([A-Z])/g, (match) => `_${match[0].toLowerCase()}`);
+const validateJson = (str: string) => {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    console.log('Invalid JSON: ', '\n' + str);
+    return false;
+  }
+  return true;
+};
 
 const parseMessage = (inputMessage: any): MessageOutput | null => {
   const data = inputMessage.data.replace(/^42\[/, '').replace(/\]$/, '').split(/,(.+)/);
@@ -32,6 +41,8 @@ const parseMessage = (inputMessage: any): MessageOutput | null => {
 
   const message = data[0].replace(/"/g, '');
   const caps = convertCamelCaseToUnderscore(data[0].replace(/"/g, '')).toUpperCase();
+  const slicedData = data.slice(1).join('');
+  if (!validateJson(slicedData)) return null;
   const payload = JSON.parse(data.slice(1).join(''));
   const timestamp = new Date(inputMessage.time * 1000);
   const timeToNextMessage = inputMessage.timeToNextMessage;
