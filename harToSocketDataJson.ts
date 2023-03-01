@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { Har } from 'har-format';
+import { Entry, Har } from 'har-format';
 import * as path from 'path';
 import * as util from 'util';
 
@@ -24,20 +24,11 @@ type SessionMetadata = {
 
 const convertCamelCaseToUnderscore = (str: string) => str.replace(/([A-Z])/g, (match) => `_${match[0].toLowerCase()}`);
 
-const parseMessage = (inputMessage: any): MessageOutput => {
+const parseMessage = (inputMessage: any): MessageOutput | null => {
   const data = inputMessage.data.replace(/^42\[/, '').replace(/\]$/, '').split(/,(.+)/);
   const timeFromSessionStart = inputMessage.timeFromSessionStart;
 
-  if (!data[0] || !data[1]) {
-    return {
-      message: '',
-      timestamp: new Date(inputMessage.time * 1000),
-      timeToNextMessage: null,
-      timeFromSessionStart,
-      type: '',
-      payload: {},
-    };
-  }
+  if (!data[0] || !data[1]) return null;
 
   const message = data[0].replace(/"/g, '');
   const caps = convertCamelCaseToUnderscore(data[0].replace(/"/g, '')).toUpperCase();
@@ -62,17 +53,20 @@ export const harToSocketDataJson = async (harFilePath: string, outputPath?: stri
   const filteredEntries = entries.filter((entry) => entry._webSocketMessages);
   let timeFromSessionStart = 0;
 
-  const webSocketMessages = filteredEntries.map((entry) => entry._webSocketMessages);
+  const webSocketMessages = filteredEntries.map((entry: Entry) => entry._webSocketMessages);
   const flattenedWebSocketMessages = webSocketMessages.flat();
   const filteredWebSocketMessages = flattenedWebSocketMessages.filter((message: any) => message.type === 'receive');
-  const mappedWebSocketMessages = filteredWebSocketMessages.map((message: any, i: number, arr: any[]) => {
+
+  const mappedWebSocketMessages = filteredWebSocketMessages.reduce<MessageOutput[]>((acc, message: any, i: number, arr: any[]) => {
     const nextMessage = arr[i + 1];
     const timeToNextMessage = nextMessage ? nextMessage.time - message.time : null;
     message.timeToNextMessage = timeToNextMessage;
     message.timeFromSessionStart = timeFromSessionStart;
     timeFromSessionStart += timeToNextMessage || 0;
-    return parseMessage(message);
-  });
+    const parsedMessage = parseMessage(message);
+    if (!parsedMessage) return acc;
+    return [...acc, parsedMessage];
+  }, []);
 
   // out dir should be created in the execution path
   const usserFullPathOutDir = outputPath;
